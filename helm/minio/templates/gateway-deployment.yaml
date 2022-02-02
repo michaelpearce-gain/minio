@@ -75,6 +75,9 @@ spec:
             {{- if eq .Values.gateway.type "gcs" }}
             - "/usr/bin/docker-entrypoint.sh minio gateway gcs {{ .Values.gateway.gcs.projectId }} -S {{ .Values.certsPath }} --address :{{ .Values.minioAPIPort }} --console-address :{{ .Values.minioConsolePort }} {{- template "minio.extraArgs" . }} "
             {{- end }}
+            {{- if eq .Values.gateway.type "azure" }}
+            - "/usr/bin/docker-entrypoint.sh minio gateway azure -S {{ .Values.certsPath }} --address :{{ .Values.minioAPIPort }} --console-address :{{ .Values.minioConsolePort }} {{- template "minio.extraArgs" . }} "
+            {{- end }}
           volumeMounts:
             - name: minio-user
               mountPath: "/tmp/credentials"
@@ -106,6 +109,18 @@ spec:
             {{- if eq .Values.gateway.type "gcs" }}
             - name: GOOGLE_APPLICATION_CREDENTIALS
               value: "/tmp/credentials/service-account-file.json"
+            {{- end }}
+            {{- if eq .Values.gateway.type "azure" }}
+            - name: AZURE_STORAGE_ACCOUNT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "minio.secretName" . }}
+                  key: azureStorageAccount
+            - name: AZURE_STORAGE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "minio.secretName" . }}
+                  key: azureStorageKey
             {{- end }}
             {{- if .Values.metrics.serviceMonitor.public }}
             - name: MINIO_PROMETHEUS_AUTH_TYPE
